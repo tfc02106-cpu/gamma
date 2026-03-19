@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Interactive Gamma Correction</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Roboto', 'Noto Sans TC', sans-serif; overflow: hidden; }
+        .slide-container { width: 1280px; height: 720px; display: flex; flex-direction: column; background-color: white; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .bg-academic-blue { background-color: #1a3a52; }
+        .text-academic-blue { color: #1a3a52; }
+        .bg-academic-orange { background-color: #e67e22; }
+        .text-academic-orange { color: #e67e22; }
+        .border-academic-orange { border-color: #e67e22; }
+        .math-font { font-family: 'Times New Roman', serif; font-style: italic; }
+        
+        .formula-box { 
+            background: #f8fafc; 
+            border-left: 8px solid #e67e22; 
+            padding: 1rem 1.5rem; 
+            margin: 0.5rem 0; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #e67e22;
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+<div class="slide-container">
+<!-- Header Section -->
+<div class="h-20 bg-academic-blue flex items-center px-8 justify-between relative z-10">
+<div class="flex items-center">
+<div class="w-2 h-12 bg-academic-orange mr-4"></div>
+<div>
+<p class="text-blue-200 text-xs font-bold tracking-widest uppercase mb-1">Section 2.3: The Digital Camera</p>
+<h2 class="text-white text-3xl font-bold truncate w-full">Gamma Correction and Nonlinear Mapping</h2>
+</div>
+</div>
+<div class="text-white opacity-80"><i class="fas fa-sliders-h text-2xl"></i></div>
+</div>
+<!-- Main Content Section -->
+<div class="flex-1 px-12 py-6 flex gap-8 relative">
+<!-- Left Column: Theory & Chart -->
+<div class="w-5/12 flex flex-col">
+<!-- Compact Intro -->
+<div class="mb-4">
+<p class="text-gray-700 leading-snug text-lg">
+<span class="font-bold text-academic-blue">Problem:</span> Human vision is logarithmic, but sensors are linear. Linear encoding wastes bits on bright areas.
+                        <br/>
+<span class="font-bold text-academic-blue">Solution:</span> Apply non-linear gamma encoding.
+                    </p>
+</div>
+<!-- Formula Box -->
+<div class="formula-box mb-6">
+<p class="text-gray-500 font-bold uppercase tracking-wider text-xs mb-2">Encoding Formula</p>
+<div class="text-4xl text-gray-800 font-medium text-center">
+<span class="math-font">y'</span> = <span class="math-font">y</span><sup class="text-2xl font-bold text-academic-orange">1 / <span id="formulaGammaDisplay">2.2</span></sup>
+</div>
+</div>
+<!-- Chart.js Container -->
+<div class="flex-1 bg-white border border-gray-200 rounded-lg p-2 shadow-sm relative">
+<canvas id="gammaChart"></canvas>
+</div>
+</div>
+<!-- Right Column: Interactive Demo -->
+<div class="w-7/12 flex flex-col bg-gray-50 rounded-xl border border-gray-200 p-6 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-xl font-bold text-academic-blue"><i class="fas fa-eye mr-2"></i>Visual Impact</h3>
+<span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide" id="feedbackBadge">Perceptually Linear</span>
+</div>
+<!-- Canvas for Gradient/Image -->
+<div class="relative w-full h-48 mb-4 border-2 border-dashed border-gray-300 rounded bg-white overflow-hidden flex items-center justify-center">
+<canvas class="w-full h-full object-contain" height="200" id="imageCanvas" width="600"></canvas>
+<div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        Simulated Grayscale Ramp
+                    </div>
+</div>
+<!-- Controls Container -->
+<div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex-1 flex flex-col justify-center">
+<!-- Value Display -->
+<div class="flex justify-between items-end mb-4">
+<label class="text-gray-600 font-bold uppercase text-sm">Gamma Value (γ)</label>
+<div class="text-5xl font-bold text-academic-orange" id="gammaValueText">2.2</div>
+</div>
+<!-- Slider -->
+<div class="mb-6">
+<input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2"/>
+<div class="flex justify-between text-xs text-gray-400 mt-2 font-mono">
+<span>0.5 (Dark/Decode)</span>
+<span>1.0 (Linear)</span>
+<span>3.0 (Bright/Encode)</span>
+</div>
+</div>
+<!-- Presets -->
+<div class="grid grid-cols-4 gap-3">
+<button class="py-2 px-1 rounded border border-gray-300 hover:bg-gray-50 text-xs text-gray-600 font-medium transition" onclick="setGamma(0.5)">
+                            γ=0.5<br/>(Decoding)
+                        </button>
+<button class="py-2 px-1 rounded border border-gray-300 hover:bg-gray-50 text-xs text-gray-600 font-medium transition" onclick="setGamma(1.0)">
+                            γ=1.0<br/>(Linear)
+                        </button>
+<button class="py-2 px-1 rounded bg-blue-50 border border-blue-200 text-academic-blue text-xs font-bold shadow-sm transition ring-2 ring-blue-100" onclick="setGamma(2.2)">
+                            γ=2.2<br/>(Standard)
+                        </button>
+<button class="py-2 px-1 rounded border border-gray-300 hover:bg-gray-50 text-xs text-gray-600 font-medium transition" onclick="setGamma(2.8)">
+                            γ=2.8<br/>(Legacy)
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Section -->
+<div class="h-10 bg-gray-100 border-t border-gray-200 flex items-center justify-between px-8 text-gray-500 text-sm">
+<p><i class="fas fa-book mr-2"></i>Szeliski - Computer Vision, 2nd Ed.</p>
+<div class="flex items-center">
+<p class="mr-4">Section 2.3</p>
+<div class="bg-academic-blue text-white px-2 py-1 rounded text-xs font-bold">17</div>
+</div>
+</div>
+</div>
+<script>
+        // --- Configuration ---
+        const slider = document.getElementById('gammaSlider');
+        const valueText = document.getElementById('gammaValueText');
+        const formulaDisplay = document.getElementById('formulaGammaDisplay');
+        const feedbackBadge = document.getElementById('feedbackBadge');
+        
+        // --- Chart.js Setup ---
+        const ctx = document.getElementById('gammaChart').getContext('2d');
+        const inputPoints = Array.from({length: 50}, (_, i) => i / 49);
+        
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: inputPoints.map(v => v.toFixed(1)),
+                datasets: [
+                    {
+                        label: 'Linear (γ=1.0)',
+                        data: inputPoints,
+                        borderColor: '#cbd5e1',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Standard (γ=2.2)',
+                        data: inputPoints.map(x => Math.pow(x, 1/2.2)),
+                        borderColor: '#94a3b8',
+                        borderWidth: 2,
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        hidden: false
+                    },
+                    {
+                        label: 'Current γ',
+                        data: inputPoints.map(x => Math.pow(x, 1/2.2)),
+                        borderColor: '#e67e22',
+                        backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 0 },
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+                    tooltip: { enabled: false }
+                },
+                scales: {
+                    x: { 
+                        type: 'linear',
+                        min: 0, max: 1,
+                        title: { display: true, text: 'Linear Light Input (L)', font: { size: 10 } },
+                        ticks: { stepSize: 0.2, display: true } 
+                    },
+                    y: { 
+                        min: 0, max: 1,
+                        title: { display: true, text: 'Encoded Value (V)', font: { size: 10 } },
+                        ticks: { stepSize: 0.2 } 
+                    }
+                }
+            }
+        });
+
+        // --- Canvas Image Processing ---
+        const imgCanvas = document.getElementById('imageCanvas');
+        const imgCtx = imgCanvas.getContext('2d');
+        const width = imgCanvas.width;
+        const height = imgCanvas.height;
+
+        // Create base pattern (Step wedge + Gradient)
+        function drawBasePattern() {
+            // Clear
+            imgCtx.clearRect(0, 0, width, height);
+            
+            // 1. Step Wedge (Top half)
+            const steps = 10;
+            const stepW = width / steps;
+            for(let i=0; i<steps; i++) {
+                const val = Math.floor((i / (steps-1)) * 255);
+                imgCtx.fillStyle = `rgb(${val},${val},${val})`;
+                imgCtx.fillRect(i*stepW, 0, stepW, height/2);
+            }
+            
+            // 2. Smooth Gradient (Bottom half)
+            const gradient = imgCtx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, 'black');
+            gradient.addColorStop(1, 'white');
+            imgCtx.fillStyle = gradient;
+            imgCtx.fillRect(0, height/2, width, height/2);
+        }
+
+        // Apply Gamma Correction
+        function updateCanvas(gamma) {
+            drawBasePattern();
+            const imageData = imgCtx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            const exponent = 1 / gamma;
+
+            for (let i = 0; i < data.length; i += 4) {
+                // Normalize 0-255 to 0-1
+                let r = data[i] / 255;
+                let g = data[i+1] / 255;
+                let b = data[i+2] / 255;
+
+                // Apply formula: y' = y^(1/gamma)
+                r = Math.pow(r, exponent);
+                g = Math.pow(g, exponent);
+                b = Math.pow(b, exponent);
+
+                // Scale back
+                data[i] = r * 255;
+                data[i+1] = g * 255;
+                data[i+2] = b * 255;
+                // Alpha (data[i+3]) remains unchanged
+            }
+            imgCtx.putImageData(imageData, 0, 0);
+            
+            // Add Text overlay to canvas for clarity
+            imgCtx.fillStyle = (gamma > 1.5) ? 'black' : 'white';
+            imgCtx.font = "bold 12px Roboto";
+            imgCtx.fillText("Banding Test", 10, 20);
+            imgCtx.fillText("Smooth Gradient", 10, height/2 + 20);
+        }
+
+        // --- Logic & Event Listeners ---
+        function updateAll(val) {
+            const gamma = parseFloat(val);
+            
+            // Update Text
+            valueText.innerText = gamma.toFixed(1);
+            formulaDisplay.innerText = gamma.toFixed(1);
+
+            // Update Feedback
+            if(gamma > 2.5) {
+                feedbackBadge.className = "bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
+                feedbackBadge.innerText = "Encoding Strong (Bright)";
+            } else if (gamma < 0.8) {
+                feedbackBadge.className = "bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
+                feedbackBadge.innerText = "Encoding Weak (Dark)";
+            } else if (Math.abs(gamma - 1.0) < 0.1) {
+                feedbackBadge.className = "bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
+                feedbackBadge.innerText = "Linear (No Change)";
+            } else {
+                feedbackBadge.className = "bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
+                feedbackBadge.innerText = "Perceptually Linear";
+            }
+
+            // Update Chart
+            chart.data.datasets[2].data = inputPoints.map(x => Math.pow(x, 1/gamma));
+            chart.update();
+
+            // Update Image
+            updateCanvas(gamma);
+        }
+
+        function setGamma(val) {
+            slider.value = val;
+            updateAll(val);
+        }
+
+        slider.addEventListener('input', (e) => updateAll(e.target.value));
+
+        // Initialize
+        updateAll(2.2);
+
+    </script>
+</body>
+</html>
