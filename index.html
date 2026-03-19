@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Szeliski CV: Gamma & Chromaticity Lab</title>
+    <title>Szeliski CV: Image Processing Lab</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
@@ -14,7 +14,7 @@
         .bg-academic-blue { background-color: #1a3a52; }
         .formula-box { background: #f8fafc; border-left: 8px solid #e67e22; padding: 1.25rem; border-radius: 0 8px 8px 0; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #e67e22; cursor: pointer; margin-top: -7px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #e67e22; cursor: pointer; margin-top: -10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
@@ -23,140 +23,110 @@
 <div class="slide-container">
     <div class="h-20 bg-academic-blue flex items-center px-8 justify-between text-white">
         <div>
-            <p class="text-blue-300 text-[10px] font-bold tracking-widest uppercase mb-1">Computer Vision - Section 2.3</p>
-            <h2 class="text-2xl font-bold">Gamma & CIE Chromaticity 互動教學</h2>
+            <p class="text-blue-300 text-[10px] font-bold tracking-widest uppercase mb-1">Computer Vision Lab - Section 2.3</p>
+            <h2 class="text-2xl font-bold">Gamma 校正與 JPEG 壓縮實作</h2>
         </div>
         <div class="text-right hidden md:block">
             <p class="text-xs opacity-70">國立勤益科技大學</p>
-            <p class="text-xs opacity-70">智慧自動化工程系</p>
+            <p class="text-xs opacity-70">陳智榮 教授 (QB)</p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-        
         <div class="lg:col-span-5 space-y-6">
             <div class="formula-box shadow-sm">
-                <p class="text-gray-400 font-bold text-[10px] mb-2 uppercase tracking-tighter">Non-linear Encoding</p>
+                <p class="text-gray-400 font-bold text-[10px] mb-2 uppercase">Encoding Formula</p>
                 <div class="text-3xl text-gray-800 font-serif text-center italic">
-                    V<sub>out</sub> = V<sub>in</sub> <sup class="text-red-500 font-bold" id="formulaGamma">1/2.2</sup>
+                    y' = y <sup class="text-red-500 font-bold" id="formulaGamma">1/2.2</sup>
                 </div>
-                <p class="text-[11px] text-gray-500 mt-2">※ 此公式用於補償顯示器的非線性反應，使視覺感受趨於線性。</p>
             </div>
-
-            <div class="bg-white border border-gray-200 rounded-lg p-4 h-64 shadow-sm">
+            <div class="h-64 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 <canvas id="gammaChart"></canvas>
             </div>
-            
-            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
-                <p class="font-bold mb-1"><i class="fas fa-info-circle mr-1"></i> 教學提示：</p>
-                <p>觀察當 γ 增加時，中間色調如何被「拉亮」。這有助於在有限的 8-bit 空間中保留更多暗部細節。</p>
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm">
+                <p class="font-bold text-blue-800 mb-1"><i class="fas fa-lightbulb mr-1"></i> 實驗說明：</p>
+                <p class="text-blue-700">1. 調整上方 Gamma 拉桿觀察亮度。<br>2. 輸入 RGB 數值計算色度座標。<br>3. 選擇 JPEG 品質並下載測試。</p>
             </div>
         </div>
 
         <div class="lg:col-span-7 space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner">
-            
             <section>
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold text-gray-700"><i class="fas fa-sliders-h mr-2"></i>即時 Gamma 影像處理</h3>
+                    <h3 class="text-lg font-bold text-gray-700">即時影像測試 (Gamma)</h3>
                     <span class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold" id="gammaLabel">γ = 2.2</span>
                 </div>
-                
-                <div class="bg-black rounded overflow-hidden border-4 border-white shadow-md mb-4" style="height: 120px;">
+                <div class="bg-black rounded border-4 border-white shadow-md mb-4" style="height: 100px;">
                     <canvas id="imageCanvas" class="w-full h-full"></canvas>
                 </div>
-
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2" class="mb-4"/>
                     <div class="grid grid-cols-4 gap-2">
-                        <button class="bg-gray-100 py-2 rounded text-[11px] hover:bg-gray-200" onclick="setGamma(1.0)">線性 (1.0)</button>
-                        <button class="bg-blue-600 text-white py-2 rounded text-[11px] font-bold shadow-md" onclick="setGamma(2.2)">標準 (2.2)</button>
-                        <button class="bg-gray-100 py-2 rounded text-[11px] hover:bg-gray-200" onclick="setGamma(0.45)">相機編碼</button>
-                        <button class="bg-gray-100 py-2 rounded text-[11px] hover:bg-gray-200" onclick="setGamma(2.8)">舊式螢幕</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(1.0)">線性(1.0)</button>
+                        <button class="bg-blue-600 text-white py-2 rounded text-[11px] font-bold" onclick="setGamma(2.2)">標準(2.2)</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(0.45)">編碼(0.45)</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(2.8)">舊式(2.8)</button>
                     </div>
                 </div>
             </section>
 
-            <section class="mt-8 pt-6 border-t border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-700"><i class="fas fa-calculator mr-2"></i>CIE 1931 色度座標計算機</h3>
-                    <div class="w-8 h-8 rounded-full border shadow-sm" id="colorPreview"></div>
+            <section class="bg-white p-5 rounded-xl border border-blue-100 shadow-sm">
+                <h3 class="text-sm font-bold text-gray-600 mb-4 uppercase tracking-widest"><i class="fas fa-file-export mr-2"></i> JPEG 壓縮與下載</h3>
+                <div class="flex items-center gap-4">
+                    <div class="flex-1">
+                        <p class="text-[10px] text-gray-400 font-bold mb-2">選擇壓縮品質 (Quality)</p>
+                        <div class="flex gap-2">
+                            <button class="q-btn flex-1 py-2 border rounded text-xs" onclick="setQuality(0.8, this)">0.8 (高)</button>
+                            <button class="q-btn flex-1 py-2 border rounded text-xs bg-blue-50 border-blue-200" onclick="setQuality(0.5, this)">0.5 (中)</button>
+                            <button class="q-btn flex-1 py-2 border rounded text-xs" onclick="setQuality(0.3, this)">0.3 (低)</button>
+                        </div>
+                    </div>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition transform active:scale-95" onclick="downloadJPG()">
+                        <i class="fas fa-download mr-2"></i>下載 JPG
+                    </button>
                 </div>
-                
-                <div class="grid grid-cols-3 gap-3 mb-4">
-                    <div>
-                        <label class="block text-[10px] font-bold text-red-500 uppercase">Red (0-255)</label>
-                        <input type="number" id="inputR" value="255" min="0" max="255" class="w-full border rounded p-2 font-mono text-lg" oninput="updateChromaticity()">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-green-500 uppercase">Green (0-255)</label>
-                        <input type="number" id="inputG" value="128" min="0" max="255" class="w-full border rounded p-2 font-mono text-lg" oninput="updateChromaticity()">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-blue-500 uppercase">Blue (0-255)</label>
-                        <input type="number" id="inputB" value="64" min="0" max="255" class="w-full border rounded p-2 font-mono text-lg" oninput="updateChromaticity()">
-                    </div>
-                </div>
+            </section>
 
-                <div class="bg-gray-800 text-white p-5 rounded-xl flex justify-around shadow-lg">
-                    <div class="text-center">
-                        <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">x 座標</p>
-                        <p class="text-2xl font-mono font-bold text-yellow-400" id="resX">0.000</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">y 座標</p>
-                        <p class="text-2xl font-mono font-bold text-yellow-400" id="resY">0.000</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">亮度 Y</p>
-                        <p class="text-2xl font-mono font-bold" id="resLY">0.000</p>
-                    </div>
+            <section class="mt-4 pt-6 border-t border-gray-200">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">CIE 1931 色度座標計算</h3>
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <input type="number" id="inputR" value="255" class="border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
+                    <input type="number" id="inputG" value="128" class="border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
+                    <input type="number" id="inputB" value="64" class="border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
                 </div>
-                <p class="text-[10px] text-gray-400 mt-3 italic text-right">※ 基於 sRGB (D65) 轉換矩陣算得</p>
+                <div class="bg-gray-800 text-white p-4 rounded-lg flex justify-around shadow-lg">
+                    <div class="text-center"><p class="text-gray-400 text-[10px]">x</p><p class="text-xl font-mono text-yellow-400" id="resX">0.000</p></div>
+                    <div class="text-center"><p class="text-gray-400 text-[10px]">y</p><p class="text-xl font-mono text-yellow-400" id="resY">0.000</p></div>
+                    <div class="text-center"><p class="text-gray-400 text-[10px]">Y</p><p class="text-xl font-mono" id="resLY">0.000</p></div>
+                </div>
             </section>
         </div>
-    </div>
-
-    <div class="bg-gray-100 px-8 py-3 text-center text-[11px] text-gray-400 border-t border-gray-200">
-        Reference: Richard Szeliski, Computer Vision: Algorithms and Applications, 2nd Edition.
     </div>
 </div>
 
 <script>
-    // --- 初始化變數 ---
+    let currentQuality = 0.5;
     const slider = document.getElementById('gammaSlider');
     const gammaLabel = document.getElementById('gammaLabel');
     const formulaDisp = document.getElementById('formulaGamma');
     const canvas = document.getElementById('imageCanvas');
     const ctx = canvas.getContext('2d');
 
-    // --- Gamma 處理邏輯 ---
     function updateGammaUI(val) {
         const gamma = parseFloat(val);
         gammaLabel.innerText = `γ = ${gamma.toFixed(1)}`;
         formulaDisp.innerText = `1/${gamma.toFixed(1)}`;
-        
-        // 更新 Chart.js 圖表數據
         gammaChart.data.datasets[1].data = Array.from({length: 21}, (_, i) => Math.pow(i/20, 1/gamma));
         gammaChart.update('none');
-
-        // 影像處理模擬
-        const w = canvas.width = 600;
-        const h = canvas.height = 150;
-        
-        // 先畫一個灰階漸層
+        const w = canvas.width = 600; const h = canvas.height = 150;
         const grad = ctx.createLinearGradient(0, 0, w, 0);
         grad.addColorStop(0, 'black'); grad.addColorStop(1, 'white');
         ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
-
-        // 取得像素進行非線性變換
         const imgData = ctx.getImageData(0, 0, w, h);
-        const data = imgData.data;
-        const exponent = 1 / gamma;
-        
+        const data = imgData.data; const exponent = 1 / gamma;
         for (let i = 0; i < data.length; i += 4) {
-            data[i] = Math.pow(data[i]/255, exponent) * 255;     // R
-            data[i+1] = Math.pow(data[i+1]/255, exponent) * 255; // G
-            data[i+2] = Math.pow(data[i+2]/255, exponent) * 255; // B
+            data[i] = Math.pow(data[i]/255, exponent) * 255;
+            data[i+1] = Math.pow(data[i+1]/255, exponent) * 255;
+            data[i+2] = Math.pow(data[i+2]/255, exponent) * 255;
         }
         ctx.putImageData(imgData, 0, 0);
     }
@@ -164,56 +134,49 @@
     function setGamma(v) { slider.value = v; updateGammaUI(v); }
     slider.oninput = (e) => updateGammaUI(e.target.value);
 
-    // --- Chart.js 配置 ---
+    // JPEG 下載邏輯
+    function setQuality(q, btn) {
+        currentQuality = q;
+        document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('bg-blue-50', 'border-blue-200'));
+        btn.classList.add('bg-blue-50', 'border-blue-200');
+    }
+
+    function downloadJPG() {
+        const link = document.createElement('a');
+        link.download = `gamma_test_q${currentQuality}.jpg`;
+        // 將畫布內容轉為 JPEG 並設定品質
+        link.href = canvas.toDataURL('image/jpeg', currentQuality);
+        link.click();
+    }
+
     const gammaChart = new Chart(document.getElementById('gammaChart'), {
         type: 'line',
         data: {
             labels: Array.from({length: 21}, (_, i) => (i/20).toFixed(1)),
             datasets: [
                 { label: 'Linear', data: Array.from({length: 21}, (_, i) => i/20), borderColor: '#e2e8f0', borderDash: [5,5], pointRadius: 0 },
-                { label: 'Current Gamma', data: [], borderColor: '#e67e22', borderWidth: 3, pointRadius: 0, tension: 0.2 }
+                { label: 'Current Gamma', data: [], borderColor: '#e67e22', borderWidth: 3, pointRadius: 0 }
             ]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { min: 0, max: 1 }, x: { grid: { display: false } } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
-    // --- CIE 色度計算邏輯 ---
     function updateChromaticity() {
-        let rVal = parseInt(document.getElementById('inputR').value) || 0;
-        let gVal = parseInt(document.getElementById('inputG').value) || 0;
-        let bVal = parseInt(document.getElementById('inputB').value) || 0;
-
-        // 更新預覽色
-        document.getElementById('colorPreview').style.backgroundColor = `rgb(${rVal},${gVal},${bVal})`;
-
-        // 正規化 0-1
-        let r = rVal / 255, g = gVal / 255, b = bVal / 255;
-
-        // 線性化 (sRGB Inverse Gamma)
+        let r = (parseInt(document.getElementById('inputR').value) || 0) / 255;
+        let g = (parseInt(document.getElementById('inputG').value) || 0) / 255;
+        let b = (parseInt(document.getElementById('inputB').value) || 0) / 255;
         const toLin = (c) => (c <= 0.04045) ? (c / 12.92) : Math.pow((c + 0.055) / 1.055, 2.4);
         let rL = toLin(r), gL = toLin(g), bL = toLin(b);
-
-        // 轉 XYZ (sRGB D65 矩陣)
         let X = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
         let Y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722;
         let Z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
-
         let sum = X + Y + Z;
         document.getElementById('resX').innerText = sum ? (X/sum).toFixed(3) : "0.313";
         document.getElementById('resY').innerText = sum ? (Y/sum).toFixed(3) : "0.329";
         document.getElementById('resLY').innerText = Y.toFixed(3);
     }
 
-    // 啟動初始化
-    window.onload = () => {
-        updateGammaUI(2.2);
-        updateChromaticity();
-    };
+    window.onload = () => { updateGammaUI(2.2); updateChromaticity(); };
 </script>
 
 </body>
