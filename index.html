@@ -1,345 +1,220 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html lang="zh-TW">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Interactive Gamma Correction</title>
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&amp;family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Roboto', 'Noto Sans TC', sans-serif; overflow: hidden; }
-        .slide-container { width: 1280px; height: 720px; display: flex; flex-direction: column; background-color: white; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Szeliski CV: Gamma & Chromaticity Lab</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Noto Sans TC', sans-serif; }
+        .slide-container { max-width: 1200px; margin: 20px auto; background-color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
         .bg-academic-blue { background-color: #1a3a52; }
-        .text-academic-blue { color: #1a3a52; }
-        .bg-academic-orange { background-color: #e67e22; }
-        .text-academic-orange { color: #e67e22; }
-        .border-academic-orange { border-color: #e67e22; }
-        .math-font { font-family: 'Times New Roman', serif; font-style: italic; }
-        
-        .formula-box { 
-            background: #f8fafc; 
-            border-left: 8px solid #e67e22; 
-            padding: 1rem 1.5rem; 
-            margin: 0.5rem 0; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            border-radius: 0 0.5rem 0.5rem 0;
-        }
-
-        /* Custom Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #e67e22;
-            cursor: pointer;
-            margin-top: -10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #cbd5e1;
-            border-radius: 2px;
-        }
-        input[type=range]:focus {
-            outline: none;
-        }
+        .formula-box { background: #f8fafc; border-left: 8px solid #e67e22; padding: 1.25rem; border-radius: 0 8px 8px 0; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #e67e22; cursor: pointer; margin-top: -7px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
 <body>
+
 <div class="slide-container">
-<!-- Header Section -->
-<div class="h-20 bg-academic-blue flex items-center px-8 justify-between relative z-10">
-<div class="flex items-center">
-<div class="w-2 h-12 bg-academic-orange mr-4"></div>
-<div>
-<p class="text-blue-200 text-xs font-bold tracking-widest uppercase mb-1">Section 2.3: The Digital Camera</p>
-<h2 class="text-white text-3xl font-bold truncate w-full">Gamma Correction and Nonlinear Mapping</h2>
-</div>
-</div>
-<div class="text-white opacity-80"><i class="fas fa-sliders-h text-2xl"></i></div>
-</div>
-<!-- Main Content Section -->
-<div class="flex-1 px-12 py-6 flex gap-8 relative">
-<!-- Left Column: Theory & Chart -->
-<div class="w-5/12 flex flex-col">
-<!-- Compact Intro -->
-<div class="mb-4">
-<p class="text-gray-700 leading-snug text-lg">
-<span class="font-bold text-academic-blue">Problem:</span> Human vision is logarithmic, but sensors are linear. Linear encoding wastes bits on bright areas.
-                        <br/>
-<span class="font-bold text-academic-blue">Solution:</span> Apply non-linear gamma encoding.
-                    </p>
-</div>
-<!-- Formula Box -->
-<div class="formula-box mb-6">
-<p class="text-gray-500 font-bold uppercase tracking-wider text-xs mb-2">Encoding Formula</p>
-<div class="text-4xl text-gray-800 font-medium text-center">
-<span class="math-font">y'</span> = <span class="math-font">y</span><sup class="text-2xl font-bold text-academic-orange">1 / <span id="formulaGammaDisplay">2.2</span></sup>
-</div>
-</div>
-<!-- Chart.js Container -->
-<div class="flex-1 bg-white border border-gray-200 rounded-lg p-2 shadow-sm relative">
-<canvas id="gammaChart"></canvas>
-</div>
-</div>
-<!-- Right Column: Interactive Demo -->
-<div class="w-7/12 flex flex-col bg-gray-50 rounded-xl border border-gray-200 p-6 shadow-sm">
-<div class="flex items-center justify-between mb-2">
-<h3 class="text-xl font-bold text-academic-blue"><i class="fas fa-eye mr-2"></i>Visual Impact</h3>
-<span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide" id="feedbackBadge">Perceptually Linear</span>
-</div>
-<!-- Canvas for Gradient/Image -->
-<div class="relative w-full h-48 mb-4 border-2 border-dashed border-gray-300 rounded bg-white overflow-hidden flex items-center justify-center">
-<canvas class="w-full h-full object-contain" height="200" id="imageCanvas" width="600"></canvas>
-<div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                        Simulated Grayscale Ramp
+    <div class="h-20 bg-academic-blue flex items-center px-8 justify-between text-white">
+        <div>
+            <p class="text-blue-300 text-[10px] font-bold tracking-widest uppercase mb-1">Computer Vision - Section 2.3</p>
+            <h2 class="text-2xl font-bold">Gamma & CIE Chromaticity 互動教學</h2>
+        </div>
+        <div class="text-right hidden md:block">
+            <p class="text-xs opacity-70">國立勤益科技大學</p>
+            <p class="text-xs opacity-70">智慧自動化工程系</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
+        
+        <div class="lg:col-span-5 space-y-6">
+            <div class="formula-box shadow-sm">
+                <p class="text-gray-400 font-bold text-[10px] mb-2 uppercase tracking-tighter">Non-linear Encoding</p>
+                <div class="text-3xl text-gray-800 font-serif text-center italic">
+                    V<sub>out</sub> = V<sub>in</sub> <sup class="text-red-500 font-bold" id="formulaGamma">1/2.2</sup>
+                </div>
+                <p class="text-[11px] text-gray-500 mt-2">※ 此公式用於補償顯示器的非線性反應，使視覺感受趨於線性。</p>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg p-4 h-64 shadow-sm">
+                <canvas id="gammaChart"></canvas>
+            </div>
+            
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800">
+                <p class="font-bold mb-1"><i class="fas fa-info-circle mr-1"></i> 教學提示：</p>
+                <p>觀察當 γ 增加時，中間色調如何被「拉亮」。這有助於在有限的 8-bit 空間中保留更多暗部細節。</p>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner">
+            
+            <section>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-bold text-gray-700"><i class="fas fa-sliders-h mr-2"></i>即時 Gamma 影像處理</h3>
+                    <span class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold" id="gammaLabel">γ = 2.2</span>
+                </div>
+                
+                <div class="bg-black rounded overflow-hidden border-4 border-white shadow-md mb-4" style="height: 120px;">
+                    <canvas id="imageCanvas" class="w-full h-full"></canvas>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2" class="mb-4"/>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button class="bg-gray-100 py-2 rounded text-[11px] hover:bg-gray-200" onclick="setGamma(1.0)">線性 (1.0)</button>
+                        <button class="bg-blue-600 text-white py-2 rounded text-[11px] font-bold shadow-md" onclick="setGamma(2.2)">標準 (2.2)</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px] hover:bg-gray-200" onclick="setGamma(0.45)">相機編碼</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px] hover:bg-gray-200" onclick="setGamma(2.8)">舊式螢幕</button>
                     </div>
+                </div>
+            </section>
+
+            <section class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-700"><i class="fas fa-calculator mr-2"></i>CIE 1931 色度座標計算機</h3>
+                    <div class="w-8 h-8 rounded-full border shadow-sm" id="colorPreview"></div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-red-500 uppercase">Red (0-255)</label>
+                        <input type="number" id="inputR" value="255" min="0" max="255" class="w-full border rounded p-2 font-mono text-lg" oninput="updateChromaticity()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-green-500 uppercase">Green (0-255)</label>
+                        <input type="number" id="inputG" value="128" min="0" max="255" class="w-full border rounded p-2 font-mono text-lg" oninput="updateChromaticity()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-blue-500 uppercase">Blue (0-255)</label>
+                        <input type="number" id="inputB" value="64" min="0" max="255" class="w-full border rounded p-2 font-mono text-lg" oninput="updateChromaticity()">
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 text-white p-5 rounded-xl flex justify-around shadow-lg">
+                    <div class="text-center">
+                        <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">x 座標</p>
+                        <p class="text-2xl font-mono font-bold text-yellow-400" id="resX">0.000</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">y 座標</p>
+                        <p class="text-2xl font-mono font-bold text-yellow-400" id="resY">0.000</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">亮度 Y</p>
+                        <p class="text-2xl font-mono font-bold" id="resLY">0.000</p>
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-3 italic text-right">※ 基於 sRGB (D65) 轉換矩陣算得</p>
+            </section>
+        </div>
+    </div>
+
+    <div class="bg-gray-100 px-8 py-3 text-center text-[11px] text-gray-400 border-t border-gray-200">
+        Reference: Richard Szeliski, Computer Vision: Algorithms and Applications, 2nd Edition.
+    </div>
 </div>
-<!-- Controls Container -->
-<div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex-1 flex flex-col justify-center">
-<!-- Value Display -->
-<div class="flex justify-between items-end mb-4">
-<label class="text-gray-600 font-bold uppercase text-sm">Gamma Value (γ)</label>
-<div class="text-5xl font-bold text-academic-orange" id="gammaValueText">2.2</div>
-</div>
-<!-- Slider -->
-<div class="mb-6">
-<input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2"/>
-<div class="flex justify-between text-xs text-gray-400 mt-2 font-mono">
-<span>0.5 (Dark/Decode)</span>
-<span>1.0 (Linear)</span>
-<span>3.0 (Bright/Encode)</span>
-</div>
-</div>
-<!-- Presets -->
-<div class="grid grid-cols-4 gap-3">
-<button class="py-2 px-1 rounded border border-gray-300 hover:bg-gray-50 text-xs text-gray-600 font-medium transition" onclick="setGamma(0.5)">
-                            γ=0.5<br/>(Decoding)
-                        </button>
-<button class="py-2 px-1 rounded border border-gray-300 hover:bg-gray-50 text-xs text-gray-600 font-medium transition" onclick="setGamma(1.0)">
-                            γ=1.0<br/>(Linear)
-                        </button>
-<button class="py-2 px-1 rounded bg-blue-50 border border-blue-200 text-academic-blue text-xs font-bold shadow-sm transition ring-2 ring-blue-100" onclick="setGamma(2.2)">
-                            γ=2.2<br/>(Standard)
-                        </button>
-<button class="py-2 px-1 rounded border border-gray-300 hover:bg-gray-50 text-xs text-gray-600 font-medium transition" onclick="setGamma(2.8)">
-                            γ=2.8<br/>(Legacy)
-                        </button>
-</div>
-</div>
-</div>
-</div>
-<!-- Footer Section -->
-<div class="h-10 bg-gray-100 border-t border-gray-200 flex items-center justify-between px-8 text-gray-500 text-sm">
-<p><i class="fas fa-book mr-2"></i>Szeliski - Computer Vision, 2nd Ed.</p>
-<div class="flex items-center">
-<p class="mr-4">Section 2.3</p>
-<div class="bg-academic-blue text-white px-2 py-1 rounded text-xs font-bold">17</div>
-</div>
-</div>
-</div>
-<script>
-        // --- Configuration ---
-        const slider = document.getElementById('gammaSlider');
-        const valueText = document.getElementById('gammaValueText');
-        const formulaDisplay = document.getElementById('formulaGammaDisplay');
-        const feedbackBadge = document.getElementById('feedbackBadge');
-        
-        // --- Chart.js Setup ---
-        const ctx = document.getElementById('gammaChart').getContext('2d');
-        const inputPoints = Array.from({length: 50}, (_, i) => i / 49);
-        
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: inputPoints.map(v => v.toFixed(1)),
-                datasets: [
-                    {
-                        label: 'Linear (γ=1.0)',
-                        data: inputPoints,
-                        borderColor: '#cbd5e1',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        pointRadius: 0
-                    },
-                    {
-                        label: 'Standard (γ=2.2)',
-                        data: inputPoints.map(x => Math.pow(x, 1/2.2)),
-                        borderColor: '#94a3b8',
-                        borderWidth: 2,
-                        borderDash: [2, 2],
-                        pointRadius: 0,
-                        hidden: false
-                    },
-                    {
-                        label: 'Current γ',
-                        data: inputPoints.map(x => Math.pow(x, 1/2.2)),
-                        borderColor: '#e67e22',
-                        backgroundColor: 'rgba(230, 126, 34, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        pointRadius: 0,
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 0 },
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
-                    tooltip: { enabled: false }
-                },
-                scales: {
-                    x: { 
-                        type: 'linear',
-                        min: 0, max: 1,
-                        title: { display: true, text: 'Linear Light Input (L)', font: { size: 10 } },
-                        ticks: { stepSize: 0.2, display: true } 
-                    },
-                    y: { 
-                        min: 0, max: 1,
-                        title: { display: true, text: 'Encoded Value (V)', font: { size: 10 } },
-                        ticks: { stepSize: 0.2 } 
-                    }
-                }
-            }
-        });
-
-        // --- Canvas Image Processing ---
-        const imgCanvas = document.getElementById('imageCanvas');
-        const imgCtx = imgCanvas.getContext('2d');
-        const width = imgCanvas.width;
-        const height = imgCanvas.height;
-
-        // Create base pattern (Step wedge + Gradient)
-        function drawBasePattern() {
-            // Clear
-            imgCtx.clearRect(0, 0, width, height);
-            
-            // 1. Step Wedge (Top half)
-            const steps = 10;
-            const stepW = width / steps;
-            for(let i=0; i<steps; i++) {
-                const val = Math.floor((i / (steps-1)) * 255);
-                imgCtx.fillStyle = `rgb(${val},${val},${val})`;
-                imgCtx.fillRect(i*stepW, 0, stepW, height/2);
-            }
-            
-            // 2. Smooth Gradient (Bottom half)
-            const gradient = imgCtx.createLinearGradient(0, 0, width, 0);
-            gradient.addColorStop(0, 'black');
-            gradient.addColorStop(1, 'white');
-            imgCtx.fillStyle = gradient;
-            imgCtx.fillRect(0, height/2, width, height/2);
-        }
-
-        // Apply Gamma Correction
-        function updateCanvas(gamma) {
-            drawBasePattern();
-            const imageData = imgCtx.getImageData(0, 0, width, height);
-            const data = imageData.data;
-            const exponent = 1 / gamma;
-
-            for (let i = 0; i < data.length; i += 4) {
-                // Normalize 0-255 to 0-1
-                let r = data[i] / 255;
-                let g = data[i+1] / 255;
-                let b = data[i+2] / 255;
-
-                // Apply formula: y' = y^(1/gamma)
-                r = Math.pow(r, exponent);
-                g = Math.pow(g, exponent);
-                b = Math.pow(b, exponent);
-
-                // Scale back
-                data[i] = r * 255;
-                data[i+1] = g * 255;
-                data[i+2] = b * 255;
-                // Alpha (data[i+3]) remains unchanged
-            }
-            imgCtx.putImageData(imageData, 0, 0);
-            
-            // Add Text overlay to canvas for clarity
-            imgCtx.fillStyle = (gamma > 1.5) ? 'black' : 'white';
-            imgCtx.font = "bold 12px Roboto";
-            imgCtx.fillText("Banding Test", 10, 20);
-            imgCtx.fillText("Smooth Gradient", 10, height/2 + 20);
-        }
-
-        // --- Logic & Event Listeners ---
-        function updateAll(val) {
-            const gamma = parseFloat(val);
-            
-            // Update Text
-            valueText.innerText = gamma.toFixed(1);
-            formulaDisplay.innerText = gamma.toFixed(1);
-
-            // Update Feedback
-            if(gamma > 2.5) {
-                feedbackBadge.className = "bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
-                feedbackBadge.innerText = "Encoding Strong (Bright)";
-            } else if (gamma < 0.8) {
-                feedbackBadge.className = "bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
-                feedbackBadge.innerText = "Encoding Weak (Dark)";
-            } else if (Math.abs(gamma - 1.0) < 0.1) {
-                feedbackBadge.className = "bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
-                feedbackBadge.innerText = "Linear (No Change)";
-            } else {
-                feedbackBadge.className = "bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide";
-                feedbackBadge.innerText = "Perceptually Linear";
-            }
-
-            // Update Chart
-            chart.data.datasets[2].data = inputPoints.map(x => Math.pow(x, 1/gamma));
-            chart.update();
-
-            // Update Image
-            updateCanvas(gamma);
-        }
-
-        function setGamma(val) {
-            slider.value = val;
-            updateAll(val);
-        }
-
-        slider.addEventListener('input', (e) => updateAll(e.target.value));
-
-        // Initialize
-        updateAll(2.2);
 
 <script>
-        // ...原本的程式碼...
+    // --- 初始化變數 ---
+    const slider = document.getElementById('gammaSlider');
+    const gammaLabel = document.getElementById('gammaLabel');
+    const formulaDisp = document.getElementById('formulaGamma');
+    const canvas = document.getElementById('imageCanvas');
+    const ctx = canvas.getContext('2d');
 
-        updateAll(2.2); // 原本的結尾
-
-        // --- 這裡就是「加入到原有的 <script> 標籤內」的意思 ---
-        function updateChromaticity() {
-            let r = parseInt(document.getElementById('inputR').value) || 0;
-            // ... (貼上我給您的那整段函數) ...
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            updateChromaticity();
-        });
-        // ---------------------------------------------------
-
-    </script>
-
+    // --- Gamma 處理邏輯 ---
+    function updateGammaUI(val) {
+        const gamma = parseFloat(val);
+        gammaLabel.innerText = `γ = ${gamma.toFixed(1)}`;
+        formulaDisp.innerText = `1/${gamma.toFixed(1)}`;
         
+        // 更新 Chart.js 圖表數據
+        gammaChart.data.datasets[1].data = Array.from({length: 21}, (_, i) => Math.pow(i/20, 1/gamma));
+        gammaChart.update('none');
 
-    </script>
+        // 影像處理模擬
+        const w = canvas.width = 600;
+        const h = canvas.height = 150;
+        
+        // 先畫一個灰階漸層
+        const grad = ctx.createLinearGradient(0, 0, w, 0);
+        grad.addColorStop(0, 'black'); grad.addColorStop(1, 'white');
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+
+        // 取得像素進行非線性變換
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+        const exponent = 1 / gamma;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.pow(data[i]/255, exponent) * 255;     // R
+            data[i+1] = Math.pow(data[i+1]/255, exponent) * 255; // G
+            data[i+2] = Math.pow(data[i+2]/255, exponent) * 255; // B
+        }
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    function setGamma(v) { slider.value = v; updateGammaUI(v); }
+    slider.oninput = (e) => updateGammaUI(e.target.value);
+
+    // --- Chart.js 配置 ---
+    const gammaChart = new Chart(document.getElementById('gammaChart'), {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 21}, (_, i) => (i/20).toFixed(1)),
+            datasets: [
+                { label: 'Linear', data: Array.from({length: 21}, (_, i) => i/20), borderColor: '#e2e8f0', borderDash: [5,5], pointRadius: 0 },
+                { label: 'Current Gamma', data: [], borderColor: '#e67e22', borderWidth: 3, pointRadius: 0, tension: 0.2 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { min: 0, max: 1 }, x: { grid: { display: false } } }
+        }
+    });
+
+    // --- CIE 色度計算邏輯 ---
+    function updateChromaticity() {
+        let rVal = parseInt(document.getElementById('inputR').value) || 0;
+        let gVal = parseInt(document.getElementById('inputG').value) || 0;
+        let bVal = parseInt(document.getElementById('inputB').value) || 0;
+
+        // 更新預覽色
+        document.getElementById('colorPreview').style.backgroundColor = `rgb(${rVal},${gVal},${bVal})`;
+
+        // 正規化 0-1
+        let r = rVal / 255, g = gVal / 255, b = bVal / 255;
+
+        // 線性化 (sRGB Inverse Gamma)
+        const toLin = (c) => (c <= 0.04045) ? (c / 12.92) : Math.pow((c + 0.055) / 1.055, 2.4);
+        let rL = toLin(r), gL = toLin(g), bL = toLin(b);
+
+        // 轉 XYZ (sRGB D65 矩陣)
+        let X = rL * 0.4124 + gL * 0.3576 + bL * 0.1805;
+        let Y = rL * 0.2126 + gL * 0.7152 + bL * 0.0722;
+        let Z = rL * 0.0193 + gL * 0.1192 + bL * 0.9505;
+
+        let sum = X + Y + Z;
+        document.getElementById('resX').innerText = sum ? (X/sum).toFixed(3) : "0.313";
+        document.getElementById('resY').innerText = sum ? (Y/sum).toFixed(3) : "0.329";
+        document.getElementById('resLY').innerText = Y.toFixed(3);
+    }
+
+    // 啟動初始化
+    window.onload = () => {
+        updateGammaUI(2.2);
+        updateChromaticity();
+    };
+</script>
+
 </body>
 </html>
