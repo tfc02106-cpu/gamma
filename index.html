@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Noto Sans TC', sans-serif; }
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Roboto', 'Noto Sans TC', sans-serif; }
         .slide-container { max-width: 1200px; margin: 20px auto; background-color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; }
         .bg-academic-blue { background-color: #1a3a52; }
         .formula-box { background: #f8fafc; border-left: 8px solid #e67e22; padding: 1.25rem; border-radius: 0 8px 8px 0; }
@@ -24,11 +24,11 @@
     <div class="h-20 bg-academic-blue flex items-center px-8 justify-between text-white">
         <div>
             <p class="text-blue-300 text-[10px] font-bold tracking-widest uppercase mb-1">Computer Vision Lab - Section 2.3</p>
-            <h2 class="text-2xl font-bold">Gamma 校正與 JPEG 壓縮實作</h2>
+            <h2 class="text-2xl font-bold">Gamma Correction & JPEG Compression Lab</h2>
         </div>
         <div class="text-right hidden md:block">
-            <p class="text-xs opacity-70">國立勤益科技大學</p>
-            <p class="text-xs opacity-70">陳智榮 教授 (QB)</p>
+            <p class="text-xs opacity-70">National Chin-Yi University of Technology</p>
+            <p class="text-xs opacity-70">Prof. Chen Zhirong (QB)</p>
         </div>
     </div>
 
@@ -44,15 +44,19 @@
                 <canvas id="gammaChart"></canvas>
             </div>
             <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm">
-                <p class="font-bold text-blue-800 mb-1"><i class="fas fa-lightbulb mr-1"></i> 實驗說明：</p>
-                <p class="text-blue-700">1. 調整上方 Gamma 拉桿觀察亮度。<br>2. 輸入 RGB 數值計算色度座標。<br>3. 選擇 JPEG 品質並下載測試。</p>
+                <p class="font-bold text-blue-800 mb-1"><i class="fas fa-lightbulb mr-1"></i> Instructions:</p>
+                <ul class="text-blue-700 list-decimal list-inside space-y-1">
+                    <li>Adjust the Gamma slider to observe brightness changes.</li>
+                    <li>Input RGB values to calculate chromaticity coordinates.</li>
+                    <li>Select JPEG quality and download for artifact testing.</li>
+                </ul>
             </div>
         </div>
 
         <div class="lg:col-span-7 space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner">
             <section>
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold text-gray-700">即時影像測試 (Gamma)</h3>
+                    <h3 class="text-lg font-bold text-gray-700">Real-time Image Test (Gamma)</h3>
                     <span class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold" id="gammaLabel">γ = 2.2</span>
                 </div>
                 <div class="bg-black rounded border-4 border-white shadow-md mb-4" style="height: 100px;">
@@ -61,42 +65,51 @@
                 <div class="bg-white p-4 rounded-lg shadow-sm">
                     <input id="gammaSlider" max="3.0" min="0.5" step="0.1" type="range" value="2.2" class="mb-4"/>
                     <div class="grid grid-cols-4 gap-2">
-                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(1.0)">線性(1.0)</button>
-                        <button class="bg-blue-600 text-white py-2 rounded text-[11px] font-bold" onclick="setGamma(2.2)">標準(2.2)</button>
-                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(0.45)">編碼(0.45)</button>
-                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(2.8)">舊式(2.8)</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(1.0)">Linear (1.0)</button>
+                        <button class="bg-blue-600 text-white py-2 rounded text-[11px] font-bold" onclick="setGamma(2.2)">Standard (2.2)</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(0.45)">Encoding (0.45)</button>
+                        <button class="bg-gray-100 py-2 rounded text-[11px]" onclick="setGamma(2.8)">Legacy (2.8)</button>
                     </div>
                 </div>
             </section>
 
             <section class="bg-white p-5 rounded-xl border border-blue-100 shadow-sm">
-                <h3 class="text-sm font-bold text-gray-600 mb-4 uppercase tracking-widest"><i class="fas fa-file-export mr-2"></i> JPEG 壓縮與下載</h3>
+                <h3 class="text-sm font-bold text-gray-600 mb-4 uppercase tracking-widest"><i class="fas fa-file-export mr-2"></i> JPEG Compression & Download</h3>
                 <div class="flex items-center gap-4">
                     <div class="flex-1">
-                        <p class="text-[10px] text-gray-400 font-bold mb-2">選擇壓縮品質 (Quality)</p>
+                        <p class="text-[10px] text-gray-400 font-bold mb-2">Select Compression Quality</p>
                         <div class="flex gap-2">
-                            <button class="q-btn flex-1 py-2 border rounded text-xs" onclick="setQuality(0.8, this)">0.8 (高)</button>
-                            <button class="q-btn flex-1 py-2 border rounded text-xs bg-blue-50 border-blue-200" onclick="setQuality(0.5, this)">0.5 (中)</button>
-                            <button class="q-btn flex-1 py-2 border rounded text-xs" onclick="setQuality(0.3, this)">0.3 (低)</button>
+                            <button class="q-btn flex-1 py-2 border rounded text-xs" onclick="setQuality(0.8, this)">0.8 (High)</button>
+                            <button class="q-btn flex-1 py-2 border rounded text-xs bg-blue-50 border-blue-200" onclick="setQuality(0.5, this)">0.5 (Mid)</button>
+                            <button class="q-btn flex-1 py-2 border rounded text-xs" onclick="setQuality(0.3, this)">0.3 (Low)</button>
                         </div>
                     </div>
                     <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition transform active:scale-95" onclick="downloadJPG()">
-                        <i class="fas fa-download mr-2"></i>下載 JPG
+                        <i class="fas fa-download mr-2"></i>Download JPG
                     </button>
                 </div>
             </section>
 
             <section class="mt-4 pt-6 border-t border-gray-200">
-                <h3 class="text-lg font-bold text-gray-700 mb-4">CIE 1931 色度座標計算</h3>
+                <h3 class="text-lg font-bold text-gray-700 mb-4">CIE 1931 Chromaticity Calculation</h3>
                 <div class="grid grid-cols-3 gap-3 mb-4">
-                    <input type="number" id="inputR" value="255" class="border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
-                    <input type="number" id="inputG" value="128" class="border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
-                    <input type="number" id="inputB" value="64" class="border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
+                    <div>
+                        <p class="text-[10px] font-bold text-red-500 mb-1 uppercase">Red</p>
+                        <input type="number" id="inputR" value="255" class="w-full border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-green-500 mb-1 uppercase">Green</p>
+                        <input type="number" id="inputG" value="128" class="w-full border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-blue-500 mb-1 uppercase">Blue</p>
+                        <input type="number" id="inputB" value="64" class="w-full border rounded p-2 font-mono text-center" oninput="updateChromaticity()">
+                    </div>
                 </div>
                 <div class="bg-gray-800 text-white p-4 rounded-lg flex justify-around shadow-lg">
-                    <div class="text-center"><p class="text-gray-400 text-[10px]">x</p><p class="text-xl font-mono text-yellow-400" id="resX">0.000</p></div>
-                    <div class="text-center"><p class="text-gray-400 text-[10px]">y</p><p class="text-xl font-mono text-yellow-400" id="resY">0.000</p></div>
-                    <div class="text-center"><p class="text-gray-400 text-[10px]">Y</p><p class="text-xl font-mono" id="resLY">0.000</p></div>
+                    <div class="text-center"><p class="text-gray-400 text-[10px] uppercase font-bold">x</p><p class="text-xl font-mono text-yellow-400" id="resX">0.000</p></div>
+                    <div class="text-center"><p class="text-gray-400 text-[10px] uppercase font-bold">y</p><p class="text-xl font-mono text-yellow-400" id="resY">0.000</p></div>
+                    <div class="text-center"><p class="text-gray-400 text-[10px] uppercase font-bold">Luminance Y</p><p class="text-xl font-mono" id="resLY">0.000</p></div>
                 </div>
             </section>
         </div>
@@ -134,7 +147,6 @@
     function setGamma(v) { slider.value = v; updateGammaUI(v); }
     slider.oninput = (e) => updateGammaUI(e.target.value);
 
-    // JPEG 下載邏輯
     function setQuality(q, btn) {
         currentQuality = q;
         document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('bg-blue-50', 'border-blue-200'));
@@ -143,8 +155,7 @@
 
     function downloadJPG() {
         const link = document.createElement('a');
-        link.download = `gamma_test_q${currentQuality}.jpg`;
-        // 將畫布內容轉為 JPEG 並設定品質
+        link.download = `cv_lab_gamma_q${currentQuality}.jpg`;
         link.href = canvas.toDataURL('image/jpeg', currentQuality);
         link.click();
     }
