@@ -320,6 +320,26 @@
         // Initialize
         updateAll(2.2);
 
+<script>
+        // ...原本的程式碼...
+
+        updateAll(2.2); // 原本的結尾
+
+        // --- 這裡就是「加入到原有的 <script> 標籤內」的意思 ---
+        function updateChromaticity() {
+            let r = parseInt(document.getElementById('inputR').value) || 0;
+            // ... (貼上我給您的那整段函數) ...
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateChromaticity();
+        });
+        // ---------------------------------------------------
+
+    </script>
+
+        
+
     </script>
 </body>
 </html>
